@@ -7,7 +7,6 @@ use opentelemetry::{
     trace::{FutureExt, SpanKind, TraceContextExt},
     Context as OpenTelemetryContext, Key,
 };
-use opentelemetry::trace::Tracer;
 use opentelemetry_sdk::trace::Tracer;
 
 use crate::{
