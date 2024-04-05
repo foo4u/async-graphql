@@ -7,7 +7,7 @@ pub mod apollo_persisted_queries;
 mod apollo_tracing;
 #[cfg(feature = "log")]
 mod logger;
-#[cfg(feature = "opentelemetry")]
+#[cfg(feature = "opentel")]
 mod opentelemetry;
 #[cfg(feature = "tracing")]
 mod tracing;

@@ -4,9 +4,10 @@ use async_graphql_parser::types::ExecutableDocument;
 use async_graphql_value::Variables;
 use futures_util::{stream::BoxStream, TryFutureExt};
 use opentelemetry::{
-    trace::{FutureExt, SpanKind, TraceContextExt, Tracer},
+    trace::{FutureExt, SpanKind, TraceContextExt},
     Context as OpenTelemetryContext, Key,
 };
+use opentelemetry_sdk::trace::Tracer;
 
 use crate::{
     extensions::{
@@ -25,18 +26,14 @@ const KEY_COMPLEXITY: Key = Key::from_static_str("graphql.complexity");
 const KEY_DEPTH: Key = Key::from_static_str("graphql.depth");
 
 /// OpenTelemetry extension
-#[cfg_attr(docsrs, doc(cfg(feature = "opentelemetry")))]
-pub struct OpenTelemetry<T> {
-    tracer: Arc<T>,
+#[cfg_attr(docsrs, doc(cfg(feature = "opentel")))]
+pub struct OpenTelemetry {
+    tracer: Arc<Tracer>,
 }
 
-impl<T> OpenTelemetry<T> {
+impl OpenTelemetry {
     /// Use `tracer` to create an OpenTelemetry extension.
-    pub fn new(tracer: T) -> OpenTelemetry<T>
-    where
-        T: Tracer + Send + Sync + 'static,
-        <T as Tracer>::Span: Sync + Send,
-    {
+    pub fn new(tracer: Tracer) -> Self {
         Self {
             tracer: Arc::new(tracer),
         }
