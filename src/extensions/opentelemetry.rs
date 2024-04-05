@@ -7,6 +7,7 @@ use opentelemetry::{
     trace::{FutureExt, SpanKind, TraceContextExt},
     Context as OpenTelemetryContext, Key,
 };
+use opentelemetry::trace::Tracer;
 use opentelemetry_sdk::trace::Tracer;
 
 use crate::{
@@ -40,11 +41,7 @@ impl OpenTelemetry {
     }
 }
 
-impl<T> ExtensionFactory for OpenTelemetry<T>
-where
-    T: Tracer + Send + Sync + 'static,
-    <T as Tracer>::Span: Sync + Send,
-{
+impl ExtensionFactory for OpenTelemetry {
     fn create(&self) -> Arc<dyn Extension> {
         Arc::new(OpenTelemetryExtension {
             tracer: self.tracer.clone(),
@@ -52,16 +49,12 @@ where
     }
 }
 
-struct OpenTelemetryExtension<T> {
-    tracer: Arc<T>,
+struct OpenTelemetryExtension {
+    tracer: Arc<Tracer>,
 }
 
 #[async_trait::async_trait]
-impl<T> Extension for OpenTelemetryExtension<T>
-where
-    T: Tracer + Send + Sync + 'static,
-    <T as Tracer>::Span: Sync + Send,
-{
+impl Extension for OpenTelemetryExtension {
     async fn request(&self, ctx: &ExtensionContext<'_>, next: NextRequest<'_>) -> Response {
         next.run(ctx)
             .with_context(OpenTelemetryContext::current_with_span(
