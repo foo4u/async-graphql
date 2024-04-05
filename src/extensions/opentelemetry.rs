@@ -6,6 +6,7 @@ use futures_util::{stream::BoxStream, TryFutureExt};
 use opentelemetry::{
     trace::{FutureExt, SpanKind, TraceContextExt, Tracer},
     Context as OpenTelemetryContext, Key,
+    global::BoxedTracer,
 };
 
 use crate::{
@@ -26,28 +27,20 @@ const KEY_DEPTH: Key = Key::from_static_str("graphql.depth");
 
 /// OpenTelemetry extension
 #[cfg_attr(docsrs, doc(cfg(feature = "opentelemetry")))]
-pub struct OpenTelemetry<T> {
-    tracer: Arc<T>,
+pub struct OpenTelemetry {
+    tracer: Arc<BoxedTracer>,
 }
 
-impl<T> OpenTelemetry<T> {
+impl OpenTelemetry {
     /// Use `tracer` to create an OpenTelemetry extension.
-    pub fn new(tracer: T) -> OpenTelemetry<T>
-    where
-        T: Tracer + Send + Sync + 'static,
-        <T as Tracer>::Span: Sync + Send,
-    {
+    pub fn new(tracer: BoxedTracer) -> Self {
         Self {
             tracer: Arc::new(tracer),
         }
     }
 }
 
-impl<T> ExtensionFactory for OpenTelemetry<T>
-where
-    T: Tracer + Send + Sync + 'static,
-    <T as Tracer>::Span: Sync + Send,
-{
+impl ExtensionFactory for OpenTelemetry {
     fn create(&self) -> Arc<dyn Extension> {
         Arc::new(OpenTelemetryExtension {
             tracer: self.tracer.clone(),
@@ -55,16 +48,12 @@ where
     }
 }
 
-struct OpenTelemetryExtension<T> {
-    tracer: Arc<T>,
+struct OpenTelemetryExtension {
+    tracer: Arc<BoxedTracer>,
 }
 
 #[async_trait::async_trait]
-impl<T> Extension for OpenTelemetryExtension<T>
-where
-    T: Tracer + Send + Sync + 'static,
-    <T as Tracer>::Span: Sync + Send,
-{
+impl Extension for OpenTelemetryExtension {
     async fn request(&self, ctx: &ExtensionContext<'_>, next: NextRequest<'_>) -> Response {
         next.run(ctx)
             .with_context(OpenTelemetryContext::current_with_span(
